@@ -1,17 +1,21 @@
 package eu.horyzon.premiumconnector;
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
 import java.sql.SQLException;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Set;
 import java.util.logging.Level;
 
 import com.github.games647.craftapi.resolver.MojangResolver;
+
+import org.yaml.snakeyaml.Yaml;
 
 import eu.horyzon.premiumconnector.command.CommandBase;
 import eu.horyzon.premiumconnector.command.CommandType;
@@ -38,6 +42,7 @@ public class PremiumConnector extends Plugin {
 	private DataSource source;
 	private SQLManager SQLManager;
 	private ServerInfo crackedServer;
+	private Yaml yaml;
 	private boolean secondAttempt,
 			blockServerSwitch;
 	private int timeCommand;
@@ -50,17 +55,18 @@ public class PremiumConnector extends Plugin {
 	@Override
 	public void onEnable() {
 		instance = this;
+		yaml = new Yaml();
 
 		if (!getDataFolder().exists())
 			getDataFolder().mkdir();
 
 		try {
-			Configuration config = loadConfiguration(getDataFolder(), "config.yml");
+			LinkedHashMap<String, Object> config = loadConfiguration(getDataFolder(), "config.yml");
 
-			getLogger().setLevel(Level.parse(config.getString("debug", "INFO")));
+			getLogger().setLevel(Level.parse((String) config.get("debug")));
 			getLogger().info("Debug level set to " + getLogger().getLevel());
 
-			if ( (crackedServer = getProxy().getServerInfo(config.getString("authServer"))) == null) {
+			if ( (crackedServer = getProxy().getServerInfo((String) config.get("authServer"))) == null) {
 				getLogger().warning("Please provide a correct cracked server name in the configuration file.");
 				return;
 			}
@@ -114,7 +120,7 @@ public class PremiumConnector extends Plugin {
 		}
 	}
 
-	private Configuration loadConfiguration(File directory, String fileName) throws IOException {
+	private LinkedHashMap<String, Object> loadConfiguration(File directory, String fileName) throws IOException {
 		File file = new File(directory, fileName);
 		if (!file.exists()) {
 			if (file.getParentFile() != null)
@@ -129,7 +135,7 @@ public class PremiumConnector extends Plugin {
 			}
 		}
 
-		return ConfigurationProvider.getProvider(YamlConfiguration.class).load(file);
+		return yaml.load(new FileInputStream(file));
 	}
 
 	public static PremiumConnector getInstance() {
