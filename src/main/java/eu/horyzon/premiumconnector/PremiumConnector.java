@@ -8,7 +8,6 @@ import java.nio.file.Files;
 import java.sql.SQLException;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Set;
 import java.util.logging.Level;
@@ -33,8 +32,6 @@ import net.md_5.bungee.api.config.ServerInfo;
 import net.md_5.bungee.api.event.ServerConnectEvent;
 import net.md_5.bungee.api.plugin.Plugin;
 import net.md_5.bungee.config.Configuration;
-import net.md_5.bungee.config.ConfigurationProvider;
-import net.md_5.bungee.config.YamlConfiguration;
 
 public class PremiumConnector extends Plugin {
 	private static PremiumConnector instance;
@@ -61,9 +58,9 @@ public class PremiumConnector extends Plugin {
 			getDataFolder().mkdir();
 
 		try {
-			LinkedHashMap<String, Object> config = loadConfiguration(getDataFolder(), "config.yml");
+			Configuration config = loadConfiguration(getDataFolder(), "config.yml");
 
-			getLogger().setLevel(Level.parse((String) config.get("debug")));
+			getLogger().setLevel(Level.parse(config.getString("debug", "INFO")));
 			getLogger().info("Debug level set to " + getLogger().getLevel());
 
 			if ( (crackedServer = getProxy().getServerInfo((String) config.get("authServer"))) == null) {
@@ -120,7 +117,7 @@ public class PremiumConnector extends Plugin {
 		}
 	}
 
-	private LinkedHashMap<String, Object> loadConfiguration(File directory, String fileName) throws IOException {
+	private Configuration loadConfiguration(File directory, String fileName) throws IOException {
 		File file = new File(directory, fileName);
 		if (!file.exists()) {
 			if (file.getParentFile() != null)
@@ -135,7 +132,7 @@ public class PremiumConnector extends Plugin {
 			}
 		}
 
-		return yaml.load(new FileInputStream(file));
+		return new Configuration(yaml.load(new FileInputStream(file)));
 	}
 
 	public static PremiumConnector getInstance() {
